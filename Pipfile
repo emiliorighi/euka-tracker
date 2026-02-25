@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ete3 = "*"
+requests = ">=2.31.0"
+pandas = ">=2.1.0"
+xmltodict = ">=0.13.0"
+ratelimit = ">=2.2.1"
+tenacity = ">=8.2.3"
+pyarrow = "*"
+numpy = "*"
+mbutil = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"

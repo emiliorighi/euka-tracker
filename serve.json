@@ -1,0 +1,8 @@
+{
+  "public": ".",
+  "rewrites": [
+    { "source": "/", "destination": "/frontend/index.html" },
+    { "source": "/main.js", "destination": "/frontend/main.js" },
+    { "source": "/style.css", "destination": "/frontend/style.css" }
+  ]
+}

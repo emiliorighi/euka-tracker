@@ -1,0 +1,80 @@
+{
+  "version": 8,
+  "name": "Lifemap",
+  "sources": {
+    "tiles": {
+      "type": "vector",
+      "url": "./tiles.json"
+    }
+  },
+  "layers": [
+    {
+      "id": "clade-fill",
+      "type": "fill",
+      "source": "tiles",
+      "source-layer": "polygons",
+      "paint": {
+        "fill-color": [
+          "case",
+          ["get", "has_genomes"],
+          "#22c55e",
+          ["get", "has_annotations"],
+          "#3b82f6",
+          ["get", "has_reads"],
+          "#ef4444",
+          "#6b7280"
+        ],
+        "fill-opacity": 0.6
+      },
+      "minzoom": 0,
+      "layout": {
+        "visibility": "visible"
+      }
+    },
+    {
+      "id": "branches",
+      "type": "line",
+      "source": "tiles",
+      "source-layer": "lines",
+      "paint": {
+        "line-color": "#374151",
+        "line-width": 1
+      },
+      "minzoom": 0
+    },
+    {
+      "id": "clade-labels",
+      "type": "symbol",
+      "source": "tiles",
+      "source-layer": "points",
+      "filter": ["all", ["get", "cladecenter"], ["!", ["get", "tip"]]],
+      "layout": {
+        "text-field": ["get", "sci_name"],
+        "text-font": ["Open Sans Regular"],
+        "text-size": 11,
+        "text-anchor": "center"
+      },
+      "paint": {
+        "text-color": "#1f2937"
+      },
+      "minzoom": 0
+    },
+    {
+      "id": "tip-labels",
+      "type": "symbol",
+      "source": "tiles",
+      "source-layer": "points",
+      "filter": ["get", "tip"],
+      "layout": {
+        "text-field": ["get", "sci_name"],
+        "text-font": ["Open Sans Regular"],
+        "text-size": 10,
+        "text-anchor": "center"
+      },
+      "paint": {
+        "text-color": "#4b5563"
+      },
+      "minzoom": 0
+    }
+  ]
+}

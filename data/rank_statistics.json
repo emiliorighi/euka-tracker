@@ -1,0 +1,109 @@
+{
+  "ranks": {
+    "phylum": {
+      "total": 68,
+      "states": {
+        "fully_covered": 0,
+        "genome_annotation_only": 50,
+        "genome_reads_no_annotation": 0,
+        "genome_only": 8,
+        "reads_only": 0,
+        "no_data": 10
+      },
+      "percentages": {
+        "fully_covered": 0.0,
+        "genome_annotation_only": 0.735,
+        "genome_reads_no_annotation": 0.0,
+        "genome_only": 0.118,
+        "reads_only": 0.0,
+        "no_data": 0.147
+      },
+      "avg_gc_content": 41.91,
+      "avg_genome_size": 696821461
+    },
+    "class": {
+      "total": 290,
+      "states": {
+        "fully_covered": 0,
+        "genome_annotation_only": 176,
+        "genome_reads_no_annotation": 0,
+        "genome_only": 54,
+        "reads_only": 0,
+        "no_data": 60
+      },
+      "percentages": {
+        "fully_covered": 0.0,
+        "genome_annotation_only": 0.607,
+        "genome_reads_no_annotation": 0.0,
+        "genome_only": 0.186,
+        "reads_only": 0.0,
+        "no_data": 0.207
+      },
+      "avg_gc_content": 41.98,
+      "avg_genome_size": 688111168
+    },
+    "order": {
+      "total": 1438,
+      "states": {
+        "fully_covered": 0,
+        "genome_annotation_only": 602,
+        "genome_reads_no_annotation": 0,
+        "genome_only": 261,
+        "reads_only": 0,
+        "no_data": 575
+      },
+      "percentages": {
+        "fully_covered": 0.0,
+        "genome_annotation_only": 0.419,
+        "genome_reads_no_annotation": 0.0,
+        "genome_only": 0.182,
+        "reads_only": 0.0,
+        "no_data": 0.4
+      },
+      "avg_gc_content": 41.96,
+      "avg_genome_size": 699664538
+    },
+    "family": {
+      "total": 9302,
+      "states": {
+        "fully_covered": 0,
+        "genome_annotation_only": 1729,
+        "genome_reads_no_annotation": 0,
+        "genome_only": 1308,
+        "reads_only": 0,
+        "no_data": 6265
+      },
+      "percentages": {
+        "fully_covered": 0.0,
+        "genome_annotation_only": 0.186,
+        "genome_reads_no_annotation": 0.0,
+        "genome_only": 0.141,
+        "reads_only": 0.0,
+        "no_data": 0.674
+      },
+      "avg_gc_content": 41.88,
+      "avg_genome_size": 702521171
+    },
+    "genus": {
+      "total": 104007,
+      "states": {
+        "fully_covered": 0,
+        "genome_annotation_only": 4019,
+        "genome_reads_no_annotation": 0,
+        "genome_only": 6159,
+        "reads_only": 0,
+        "no_data": 93828
+      },
+      "percentages": {
+        "fully_covered": 0.0,
+        "genome_annotation_only": 0.039,
+        "genome_reads_no_annotation": 0.0,
+        "genome_only": 0.059,
+        "reads_only": 0.0,
+        "no_data": 0.902
+      },
+      "avg_gc_content": 41.9,
+      "avg_genome_size": 700482717
+    }
+  }
+}

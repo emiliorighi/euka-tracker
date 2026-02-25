@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lifemap – Tree of Life</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="search-bar">
+      <input type="search" id="search" placeholder="Search species…" autocomplete="off" />
+      <ul id="suggestions" class="suggestions" hidden></ul>
+    </div>
+    <div id="map"></div>
+    <div id="popup" class="maplibregl-popup"></div>
+  </div>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "euka-tracker",
+  "private": true,
+  "scripts": {
+    "pipeline": "python3 -m pipeline.run_pipeline",
+    "build": "npm run pipeline",
+    "serve": "node server.js"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "serve": "^14.2.1"
+  }
+}

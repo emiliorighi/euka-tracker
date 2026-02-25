@@ -1,0 +1,19 @@
+# NCBI taxonomy (downloads ~300MB SQLite db on first run)
+ete3>=3.1.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Data processing
+pandas>=2.1.0
+pyarrow>=14.0.0
+numpy>=1.24.0
+
+# XML parsing (for NCBI/ENA APIs)
+xmltodict>=0.13.0
+
+# Rate limiting for API calls
+ratelimit>=2.2.1
+
+# Retry logic for robust API calls
+tenacity>=8.2.3
