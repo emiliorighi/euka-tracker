@@ -1,0 +1,570 @@
+# Euka Tracker — metadata models (INSDC / Eukaryota)
+#
+# Scope: metadata + outbound pointers only (no local file downloads).
+# Storage tiers:
+#   sqlite  — serving catalog (tree, species, assemblies, annotations, bioprojects, search)
+#   parquet — large fact tables (runs; optional biosamples later)
+#
+# Conventions:
+#   tax_id       — NCBI Taxonomy ID (integer)
+#   accession    — INSDC accession string (primary key where noted)
+#   *_url        — derived at ingest or API layer from accession templates
+#   nullable     — field may be empty in source data
+#
+# URL templates (build in API if not stored):
+#   ena_browser:     https://www.ebi.ac.uk/ena/browser/view/{accession}
+#   ncbi_bioproject: https://www.ncbi.nlm.nih.gov/bioproject/{accession}
+#   ncbi_taxonomy:   https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={tax_id}
+#   ncbi_dataset:    https://www.ncbi.nlm.nih.gov/datasets/genome/{accession}/
+#   annotrieve:      https://genome.crg.es/annotrieve/#!species/{tax_id}
+
+
+# =============================================================================
+# TAXON
+# Full NCBI taxonomy under Eukaryota (all ranks). Tree navigation + rollups.
+# Storage: sqlite.taxa
+# =============================================================================
+
+TAXON:
+  primary_key: tax_id
+  indexes:
+    - parent_tax_id
+    - rank
+    - name                          # consider FTS5 virtual table for search
+
+  fields:
+    - name: tax_id
+      type: integer
+      required: true
+
+    - name: parent_tax_id
+      type: integer
+      required: false 
+      notes: root Eukaryota (2759) has null
+
+    - name: scientific_name
+      type: text
+      required: true
+
+    - name: rank
+      type: text
+      required: true
+      examples: [domain, kingdom, phylum, class, order, family, genus, species, no rank]
+
+    # --- precomputed rollups (rebuilt by sync job from child tables) ---
+    - name: species_count
+      type: integer
+      required: true
+      default: 0
+      notes: number of species-rank descendants in subtree
+
+    - name: species_with_runs_count
+      type: integer
+      required: true
+      default: 0
+
+    - name: species_with_assemblies_count
+      type: integer
+      required: true
+      default: 0
+
+    - name: species_with_annotations_count
+      type: integer
+      required: true
+      default: 0
+
+    - name: avg_coding_genes_per_species
+      type: float
+      nullable: true
+      notes: mean over species in subtree that have gene_annotation stats
+
+    - name: avg_lncrna_genes_per_species
+      type: float
+      nullable: true
+
+
+# =============================================================================
+# ORGANISM
+# Species-rank taxa only. Enrichment layer on top of TAXON (tax_id = species).
+# Storage: sqlite.organisms
+# =============================================================================
+
+ORGANISM:
+  primary_key: tax_id
+  foreign_keys:
+  - tax_id -> taxa.tax_id
+
+  indexes:
+    - scientific_name
+    - iucn_category
+
+  fields:
+    - name: tax_id
+      type: integer
+      required: true
+      notes: must reference taxa where rank = species (or equivalent)
+
+    - name: scientific_name
+      type: text
+      required: true
+      notes: denormalized from taxa for fast species search
+
+    - name: binomial
+      type: text
+      nullable: true
+      notes: canonical Genus species form when parseable
+
+    - name: common_name
+      type: text
+      nullable: true
+
+    # --- conservation (IUCN Red List; species-level only) ---
+    - name: iucn_category
+      type: text
+      nullable: true
+      examples: [LC, NT, VU, EN, CR, EW, EX, DD, NE]
+
+    - name: iucn_assessment_year
+      type: integer
+      nullable: true
+
+    - name: iucn_url
+      type: text
+      nullable: true
+      notes: pointer to IUCN species page; null if not assessed
+
+    # --- per-species data presence (denormalized flags for filters) ---
+    - name: has_runs
+      type: boolean
+      required: true
+      default: false
+
+    - name: has_assemblies
+      type: boolean
+      required: true
+      default: false
+
+    - name: has_gene_annotations
+      type: boolean
+      required: true
+      default: false
+
+    - name: run_count
+      type: integer
+      required: true
+      default: 0
+      notes: total runs linked to this species tax_id
+
+    - name: bioproject_count
+      type: integer
+      required: true
+      default: 0
+      notes: distinct bioprojects with at least one run for this species
+
+
+# =============================================================================
+# BIOPROJECT
+# INSDC study / BioProject (PRJNA, PRJEB, PRJDB).
+# Storage: sqlite.bioprojects
+# =============================================================================
+
+BIOPROJECT:
+  primary_key: accession
+  indexes:
+    - tax_id
+    - first_public
+
+  fields:
+    - name: accession
+      type: text
+      required: true
+      examples: [PRJNA39551, PRJEB12345]
+
+    - name: title
+      type: text
+      nullable: true
+
+    - name: description
+      type: text
+      nullable: true
+
+    - name: tax_id
+      type: integer
+      nullable: true
+      notes: umbrella organism tax_id when provided by submitter
+
+    - name: scientific_name
+      type: text
+      nullable: true
+      notes: denormalized organism name from study metadata
+
+    - name: center_name
+      type: text
+      nullable: true
+
+    - name: first_public
+      type: date
+      nullable: true
+
+    - name: last_updated
+      type: datetime
+      nullable: true
+
+  # --- rollups (rebuilt by sync) ---
+    - name: run_count
+      type: integer
+      required: true
+      default: 0
+
+    - name: assemblies_count
+      type: integer
+      required: true
+      default: 0
+      notes: distinct assemblies accessions in this project
+
+    - name: species_count
+      type: integer
+      required: true
+      default: 0
+      notes: distinct species tax_ids in this project
+
+    # --- pointers ---
+    - name: ena_url
+      type: text
+      nullable: true
+
+    - name: ncbi_url
+      type: text
+      nullable: true
+
+
+# =============================================================================
+# RUN
+# INSDC sequence run (SRR/ERR/DRR). Largest fact table.
+# Storage: parquet.runs  (partitioned by tax_id range or hash)
+# Hot subset / recent runs may be mirrored in sqlite for demos (optional).
+# =============================================================================
+
+RUN:
+  primary_key: run_accession
+  foreign_keys:
+    - bioproject_accession -> bioprojects.accession
+    - tax_id -> taxa.tax_id
+    - species_tax_id -> organisms.tax_id   # resolved species; nullable if unresolved
+
+  indexes:
+    - tax_id
+    - species_tax_id
+    - bioproject_accession
+    - library_strategy
+    - first_public
+
+  fields:
+    - name: run_accession
+      type: text
+      required: true
+      examples: [SRR1234567, ERR1234567, DRR1234567]
+
+    - name: experiment_accession
+      type: text
+      nullable: true
+      examples: [SRX, ERX, DRX]
+
+    - name: sample_accession
+      type: text
+      nullable: true
+      examples: [SRS, ERS, SAMN, SAME]
+      notes: biosample accession; no separate biosample table in v1
+
+    - name: bioproject_accession
+      type: text
+      nullable: true
+      notes: study_accession in ENA; links to BIOPROJECT
+
+    - name: tax_id
+      type: integer
+      required: true
+      notes: tax_id reported on run (may be strain/subspecies)
+
+    - name: species_tax_id
+      type: integer
+      nullable: true
+      notes: resolved species-rank tax_id for organism-centric queries
+
+    - name: scientific_name
+      type: text
+      nullable: true
+
+    # --- sequencing metadata ---
+    - name: library_strategy
+      type: text
+      nullable: true
+      examples: [RNA-Seq, WGS, WXS, AMPLICON, OTHER]
+
+    - name: library_source
+      type: text
+      nullable: true
+      examples: [TRANSCRIPTOMIC, GENOMIC, METAGENOMIC]
+
+    - name: library_selection
+      type: text
+      nullable: true
+
+    - name: platform
+      type: text
+      nullable: true
+      examples: [ILLUMINA, PACBIO_SMRT, OXFORD_NANOPORE]
+
+    - name: instrument_model
+      type: text
+      nullable: true
+
+    - name: layout
+      type: text
+      nullable: true
+      examples: [SINGLE, PAIRED]
+
+    - name: read_count
+      type: integer
+      nullable: true
+
+    - name: base_count
+      type: integer
+      nullable: true
+
+    - name: first_public
+      type: date
+      nullable: true
+
+    # --- geography (optional; from linked biosample when available) ---
+    - name: latitude
+      type: float
+      nullable: true
+
+    - name: longitude
+      type: float
+      nullable: true
+
+    - name: country
+      type: text
+      nullable: true
+      notes: country:region or free-text from biosample
+
+    # --- pointers ---
+    - name: ena_url
+      type: text
+      nullable: true
+
+
+# =============================================================================
+# ASSEMBLY
+# Genome assembly metadata. Gene annotations attach here.
+# Storage: sqlite.assemblies
+# =============================================================================
+
+ASSEMBLY:
+  primary_key: accession
+  foreign_keys:
+    - tax_id -> taxa.tax_id
+    - species_tax_id -> organisms.tax_id
+
+  indexes:
+    - tax_id
+    - species_tax_id
+    - release_date
+
+  fields:
+    - name: accession
+      type: text
+      required: true
+      examples: [GCA_000001635.9, GCF_000001635.26]
+
+    - name: name
+      type: text
+      nullable: true
+
+    - name: tax_id
+      type: integer
+      required: true
+
+    - name: species_tax_id
+      type: integer
+      nullable: true
+
+    - name: assembly_level
+      type: text
+      nullable: true
+      examples: [Complete Genome, Chromosome, Scaffold, Contig]
+
+    - name: genome_size
+      type: integer
+      nullable: true
+      notes: total sequence length (bp)
+
+    - name: gc_percent
+      type: float
+      nullable: true
+
+    - name: contig_n50
+      type: integer
+      nullable: true
+
+    - name: scaffold_n50
+      type: integer
+      nullable: true
+
+    - name: release_date
+      type: date
+      nullable: true
+
+    - name: bioproject_accession
+      type: text
+      nullable: true
+
+    - name: biosample_accession
+      type: text
+      nullable: true
+
+    # --- pointers (no local files) ---
+    - name: ncbi_dataset_url
+      type: text
+      nullable: true
+
+# =============================================================================
+# GENE_ANNOTATION
+# Genome annotation metadata (Annotrieve / INSDC annotation releases).
+# Stats in DB; GFF and protein FASTA as remote pointers only.
+# Storage: sqlite.gene_annotations
+# =============================================================================
+
+GENE_ANNOTATION:
+  primary_key: id
+  notes: surrogate key; natural key is (assembly_accession, source) or annotrieve id
+
+  foreign_keys:
+    - assembly_accession -> assemblies.accession
+    - tax_id -> taxa.tax_id
+    - species_tax_id -> organisms.tax_id
+
+  indexes:
+    - assembly_accession
+    - tax_id
+    - species_tax_id
+    - source
+
+  fields:
+    - name: id
+      type: integer
+      required: true
+      notes: autoincrement surrogate PK
+
+    - name: assembly_accession
+      type: text
+      required: true
+
+    - name: tax_id
+      type: integer
+      required: true
+
+    - name: species_tax_id
+      type: integer
+      nullable: true
+
+    - name: source
+      type: text
+      nullable: true
+      examples: [Ensembl, NCBI RefSeq, Maker, Annotrieve]
+      notes: annotation provider / pipeline name
+
+    - name: release_date
+      type: date
+      nullable: true
+
+    # --- gene / transcript stats (from Annotrieve or GFF summary) ---
+    - name: coding_genes
+      type: integer
+      nullable: true
+
+    - name: lncrna_genes
+      type: integer
+      nullable: true
+
+    - name: pseudogenes
+      type: integer
+      nullable: true
+
+    - name: transcripts
+      type: integer
+      nullable: true
+
+    - name: proteins
+      type: integer
+      nullable: true
+
+    # --- pointers to remote annotation files (not downloaded) ---
+    - name: gff_url
+      type: text
+      nullable: true
+
+    - name: gtf_url
+      type: text
+      nullable: true
+
+    - name: protein_fasta_url
+      type: text
+      nullable: true
+
+    - name: cds_fasta_url
+      type: text
+      nullable: true
+
+    - name: annotrieve_url
+      type: text
+      nullable: true
+
+
+# =============================================================================
+# RELATIONSHIPS (summary)
+# =============================================================================
+#
+#   TAXON (tree, all ranks)
+#     └── ORGANISM (species rank only; IUCN + flags)
+#
+#   ORGANISM 1—N RUN              via species_tax_id (or tax_id)
+#   ORGANISM 1—N ASSEMBLY         via species_tax_id
+#   ORGANISM 1—N GENE_ANNOTATION  via species_tax_id
+#
+#   BIOPROJECT 1—N RUN            via bioproject_accession
+#   ASSEMBLY   1—N GENE_ANNOTATION via assembly_accession
+#
+#   RUN.sample_accession → external biosample (no v1 table)
+#
+# Sync order:
+#   1. taxa (NCBI taxonomy, Eukaryota subtree)
+#   2. organisms (extract rank=species from taxa + IUCN join)
+#   3. assemblies (NCBI Datasets)
+#   4. gene_annotations (Annotrieve)
+#   5. bioprojects + runs (ENA bulk reports, eukaryote-filtered)
+#   6. recompute taxa rollups + organism flags/counts
+
+
+# =============================================================================
+# STORAGE MAP
+# =============================================================================
+#
+#   sqlite/catalog.db
+#     taxa
+#     organisms
+#     bioprojects
+#     assemblies
+#     gene_annotations
+#     taxa_fts          — FTS5 on taxa.scientific_name
+#     organisms_fts     — FTS5 on organism names
+#
+#   parquet/facts/runs/
+#     part={000..255}/runs.parquet
+#
+#   Estimated disk (metadata only, eukaryotes):
+#     taxa + organisms + assemblies + annotations + bioprojects:  ~1–2 GB
+#     runs (~8M slim rows):                                         ~1–3 GB
+#     Total:                                                        ~3–5 GB

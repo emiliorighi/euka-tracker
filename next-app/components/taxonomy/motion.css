@@ -1,0 +1,31 @@
+@keyframes descent-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.descent-enter {
+  animation: descent-enter 600ms ease-out backwards;
+  animation-delay: calc(var(--stagger-index, 0) * 40ms);
+}
+
+.lens-crossfade {
+  transition: fill-opacity 200ms ease-out, opacity 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .descent-enter {
+    animation: none;
+  }
+
+  .lens-crossfade {
+    transition: none;
+  }
+
+  .biolume-pulse {
+    animation: none !important;
+  }
+}

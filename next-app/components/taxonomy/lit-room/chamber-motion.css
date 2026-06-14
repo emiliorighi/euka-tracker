@@ -1,0 +1,379 @@
+/* The Lit Room — chamber motion system */
+
+.vt-lit-details {
+  view-transition-name: lit-details;
+}
+
+::view-transition-old(lit-details),
+::view-transition-new(lit-details) {
+  animation-duration: var(--lit-duration, 420ms);
+  animation-timing-function: var(--lit-spring, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+::view-transition-old(lit-details) {
+  animation-name: details-exit;
+}
+
+::view-transition-new(lit-details) {
+  animation-name: details-enter;
+}
+
+@keyframes details-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.3;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes details-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+    filter: brightness(1.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Chamber stack shell */
+.chamber-stack {
+  perspective: var(--lit-chamber-perspective);
+  transform-style: preserve-3d;
+  background: oklch(0.14 0.014 var(--chamber-hue) / 0.85);
+  box-shadow:
+    inset 0 0 calc(40px + var(--chamber-glow) * 80px) oklch(0.65 0.14 var(--chamber-hue) / calc(0.08 + var(--chamber-glow) * 0.35)),
+    0 20px 60px oklch(0 0 0 / 0.45);
+  transition:
+    box-shadow 800ms var(--lit-spring),
+    --chamber-glow 650ms var(--lit-spring);
+}
+
+.chamber-stack[data-motion="settle"] {
+  --chamber-glow: calc(var(--chamber-glow, 0.3) + 0.15);
+}
+
+.chamber-stack[data-direction="drill"] .child-threshold-track {
+  opacity: 0.55;
+  transition: opacity 300ms var(--lit-spring);
+}
+
+.chamber-stack[data-direction="ascend"] .parent-ascend-card {
+  opacity: 0.55;
+  transition: opacity 300ms var(--lit-spring);
+}
+
+.chamber-stack[data-motion]:not([data-motion="idle"]) .threshold-card {
+  transform: none !important;
+}
+
+/* Hero details slot */
+.chamber-details-slot {
+  min-height: 8rem;
+  position: relative;
+}
+
+.chamber-details-slot.details-slot-prepare {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chamber-details-card {
+  /* Phase-driven animations only — no always-on transitions */
+}
+
+.chamber-details-glow {
+  background: radial-gradient(
+    ellipse 90% 70% at 50% 0%,
+    oklch(0.72 0.16 var(--chamber-hue) / calc(0.05 + var(--chamber-glow) * 0.15)) 0%,
+    transparent 65%
+  );
+}
+
+.details-card-handoff {
+  animation: details-handoff 650ms var(--lit-spring) forwards;
+}
+
+@keyframes details-handoff {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px);
+    filter: brightness(0.85);
+  }
+  55% {
+    filter: brightness(1.15);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: brightness(1);
+  }
+}
+
+/* Clade card morph overlay */
+.clade-morph-overlay {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  transform-origin: top left;
+  will-change: transform, opacity;
+}
+
+.clade-morph-overlay.is-drill {
+  transition-timing-function: cubic-bezier(0.22, 1.1, 0.36, 1);
+}
+
+.clade-morph-overlay.is-ascend {
+  transition-timing-function: cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.clade-card-shell.is-morph-source {
+  visibility: hidden;
+}
+
+/* Child threshold horizontal track */
+.child-threshold-track {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.72 0.16 152 / 0.3) transparent;
+  transition: opacity 300ms var(--lit-spring);
+}
+
+.chamber-stack[data-motion="idle"] .child-threshold-track:not([data-settling="true"]) .threshold-card {
+  animation: threshold-slide-in 420ms var(--lit-spring) backwards;
+}
+
+.chamber-stack[data-motion="idle"] .child-threshold-track:not([data-settling="true"]) .threshold-card:nth-child(1) { animation-delay: 0ms; }
+.chamber-stack[data-motion="idle"] .child-threshold-track:not([data-settling="true"]) .threshold-card:nth-child(2) { animation-delay: 40ms; }
+.chamber-stack[data-motion="idle"] .child-threshold-track:not([data-settling="true"]) .threshold-card:nth-child(3) { animation-delay: 80ms; }
+.chamber-stack[data-motion="idle"] .child-threshold-track:not([data-settling="true"]) .threshold-card:nth-child(4) { animation-delay: 120ms; }
+
+@keyframes threshold-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.clade-card-crest {
+  transition: opacity 400ms var(--lit-spring);
+}
+
+.threshold-card:hover .clade-card-crest {
+  opacity: 1;
+}
+
+.chamber-room-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 20%,
+    oklch(0.72 0.16 var(--chamber-hue) / calc(0.06 + var(--chamber-glow) * 0.25)) 0%,
+    transparent 70%
+  );
+  animation: glow-breathe 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.chamber-room-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, oklch(0.1 0.01 var(--chamber-hue) / 0.6) 100%);
+  pointer-events: none;
+}
+
+.chamber-room-fog,
+.ghost-veil-fog {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 40%, oklch(0.5 0.02 var(--chamber-hue) / calc(var(--fog-opacity) * 0.3)) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 60%, oklch(0.4 0.01 var(--chamber-hue) / calc(var(--fog-opacity) * 0.25)) 0%, transparent 55%);
+  animation: fog-drift 12s ease-in-out infinite alternate;
+}
+
+.chamber-eclipsed {
+  filter: brightness(0.45) saturate(0.7);
+  transition: filter 320ms var(--lit-spring);
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes fog-drift {
+  from {
+    transform: translateX(-2%) translateY(0);
+  }
+  to {
+    transform: translateX(2%) translateY(-1%);
+  }
+}
+
+.chamber-floor-plane {
+  transform: rotateX(2deg);
+  transform-origin: top center;
+}
+
+.floor-mosaic-perspective {
+  transform: perspective(600px) rotateX(4deg);
+  transform-origin: top center;
+}
+
+.specimen-stone-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+}
+
+/* Filament */
+.filament-column {
+  position: relative;
+}
+
+.filament-node {
+  animation: filament-spark 400ms var(--lit-spring) backwards;
+}
+
+@keyframes filament-spark {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stone levitation overlay */
+.chamber-stone-overlay {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+/* Floor stones */
+.floor-mosaic-grid .specimen-stone {
+  animation: stone-rise 380ms var(--lit-spring-snappy) backwards;
+}
+
+.floor-mosaic-grid .specimen-stone:nth-child(1) { animation-delay: 0ms; }
+.floor-mosaic-grid .specimen-stone:nth-child(2) { animation-delay: 30ms; }
+.floor-mosaic-grid .specimen-stone:nth-child(3) { animation-delay: 60ms; }
+.floor-mosaic-grid .specimen-stone:nth-child(4) { animation-delay: 90ms; }
+
+@keyframes stone-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.specimen-stone:hover {
+  animation: stone-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes stone-shimmer {
+  0%,
+  100% {
+    box-shadow: inset 0 0 20px oklch(0.72 0.16 152 / 0.1);
+  }
+  50% {
+    box-shadow: inset 0 0 28px oklch(0.72 0.16 152 / 0.22);
+  }
+}
+
+/* Levitation */
+.tile-levitation-backdrop {
+  animation: backdrop-eclipse 320ms var(--lit-spring) forwards;
+}
+
+.tile-levitation-card {
+  animation: levitation-rise 480ms var(--lit-spring-snappy) forwards;
+}
+
+@keyframes backdrop-eclipse {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes levitation-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.88) rotateX(8deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+  }
+}
+
+.funnel-strip-bar {
+  animation: funnel-grow 700ms var(--lit-spring) backwards;
+}
+
+@keyframes funnel-grow {
+  from {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+  to {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(lit-details),
+  ::view-transition-new(lit-details) {
+    animation: none !important;
+  }
+
+  .chamber-stack,
+  .chamber-room-glow,
+  .chamber-room-fog,
+  .ghost-veil-fog,
+  .chamber-details-card,
+  .chamber-details-slot,
+  .clade-morph-overlay,
+  .chamber-stone-overlay,
+  .tile-levitation-backdrop,
+  .tile-levitation-card,
+  .filament-node,
+  .child-threshold-track .threshold-card,
+  .floor-mosaic-grid .specimen-stone,
+  .funnel-strip-bar {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .specimen-stone:hover {
+    animation: none !important;
+  }
+}

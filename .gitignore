@@ -43,4 +43,14 @@ tmp/
 node_modules
 tiles/
 output/
+data/cache/
 .venv/
+
+*.gz
+*.jsonl
+redlist_species_data_2f02b1b4-6088-405f-8387-1e285bb770f2/
+.cursor/
+.cache-test/
+staged/
+inaturalist_cache/
+*.parquet

@@ -1,0 +1,20 @@
+    Eukaryota
+    |
+    |-- Child 1
+    | |
+    | |-- SubChild 1
+    | |
+    | |--
+    |
+    |-- Child2
+
+     -- -- SubChild 1 -> the first 2 -- belongs to eukaryota, the other 2 belong to Child 1
+
+
+
+Each node draws only the
+
+    |
+    |-- Node children
+
+The '--' is never draw for the node itself. the '--' of the parent node pointinting to the child connects with the top of '|' at the center of the node 

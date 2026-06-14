@@ -13,6 +13,8 @@ tenacity = ">=8.2.3"
 pyarrow = "*"
 numpy = "*"
 mbutil = "*"
+umap-learn = "*"
+sentence-transformers = "*"
 
 [dev-packages]
 

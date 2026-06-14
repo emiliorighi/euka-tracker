@@ -1,0 +1,112 @@
+/* Taxonomy Atlas — tree + dashboard shell */
+
+.atlas-tree-panel {
+  --atlas-tree-indent: 0.75rem;
+  --atlas-tree-row-height: 2.5rem;
+  --atlas-tree-max-depth: 35;
+  width: 100%;
+}
+
+.atlas-tree,
+.atlas-tree-node,
+.atlas-tree-node-row {
+  width: 100%;
+}
+
+.atlas-tree-node-row {
+  height: var(--atlas-tree-row-height);
+}
+
+.atlas-tree-node {
+  height: var(--atlas-tree-row-height);
+  transition: padding 180ms ease;
+}
+
+.atlas-tree-node-card {
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.atlas-tree-pin-slot .atlas-tree-node-card {
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.atlas-tree-node-row-ghost {
+  pointer-events: none;
+}
+
+.atlas-connector-tooltip {
+  animation: atlas-tooltip-in 160ms ease-out;
+}
+
+@keyframes atlas-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.atlas-tree-children {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.atlas-tree-connectors {
+  pointer-events: none;
+}
+
+.atlas-column {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.5 0.02 160 / 0.25) transparent;
+}
+
+.atlas-species-card {
+  transition:
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.atlas-species-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px oklch(0 0 0 / 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-tree-children,
+  .atlas-tree-node-card,
+  .atlas-species-card,
+  .atlas-connector-tooltip,
+  .atlas-view-toggle {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .atlas-species-card:hover {
+    transform: none;
+  }
+}
+
+.atlas-scatter-panel {
+  min-height: 18rem;
+}
+
+@media (min-width: 768px) {
+  .atlas-scatter-panel {
+    min-height: 0;
+  }
+}
+
+.atlas-view-toggle {
+  box-shadow:
+    0 8px 32px oklch(0 0 0 / 0.12),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
+}

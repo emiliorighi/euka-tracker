@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Build a species matrix for all eukaryotic species with assemblies, annotations, and reads.
+Deprecated: use pipeline/build_species_matrix.py instead.
 
-Fetches data from:
-- NCBI datasets CLI: assemblies (genome_size, gc_content)
-- ENA API: RNA-seq reads (tax_tree + library_strategy=rna-seq)
-- Annotrieve API: genome annotations (genome.crg.es/annotrieve)
+The staged pipeline fetches raw TSVs, selects per-species reference assemblies,
+annotations, and representative read runs, then merges into
+data/eukaryotic_species_matrix.tsv with legacy has_assembly/has_annotation/has_reads columns.
 
-Output TSV: taxid | has_assembly | has_annotation | has_reads | genome_size | gc_content
+  pipenv run python pipeline/build_species_matrix.py
+  pipenv run python pipeline/build_species_matrix.py --step select --skip-fetch
 """
 
 import json
