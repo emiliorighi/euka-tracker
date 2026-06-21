@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "link-tiles": "node scripts/link-tiles.mjs",
-    "link-staged": "node scripts/link-staged.mjs",
-    "predev": "node scripts/link-tiles.mjs && node scripts/link-staged.mjs",
     "dev": "next dev",
+    "predev": "node scripts/link-site-data.mjs",
+    "link-data": "node scripts/link-site-data.mjs",
     "build": "next build",
+    "build:pages": "node scripts/clean-public-symlinks.mjs && GITHUB_PAGES=1 next build",
+    "preview": "npm run link-data && npm run build && npm run start",
     "start": "next start",
-    "lint": "eslint .",
-    "extract:taxonomy-mock": "node scripts/extract-taxonomy-mock.mjs"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

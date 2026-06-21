@@ -1,16 +1,16 @@
-import { IUCN_META, type IucnStatus } from "@/lib/biodiversity-data"
+import { iucnMetaForCategory } from "@/lib/iucn/config"
 import { cn } from "@/lib/utils"
 
 export function IucnBadge({
-  status,
+  category,
   className,
   showLabel = false,
 }: {
-  status: IucnStatus
+  category: string | null | undefined
   className?: string
   showLabel?: boolean
 }) {
-  const meta = IUCN_META[status]
+  const meta = iucnMetaForCategory(category)
   return (
     <span
       className={cn(

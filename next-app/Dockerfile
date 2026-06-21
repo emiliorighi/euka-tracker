@@ -8,12 +8,6 @@ RUN npm install --legacy-peer-deps
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_TILE_URL=/tiles/species/landscape/v20260614
-ARG NEXT_PUBLIC_TILE_VERSION=v20260614
-ARG NEXT_PUBLIC_TAXON_ROLLUPS_URL=/staged/06_taxon_rollups.tsv
-ENV NEXT_PUBLIC_TILE_URL=$NEXT_PUBLIC_TILE_URL
-ENV NEXT_PUBLIC_TILE_VERSION=$NEXT_PUBLIC_TILE_VERSION
-ENV NEXT_PUBLIC_TAXON_ROLLUPS_URL=$NEXT_PUBLIC_TAXON_ROLLUPS_URL
 RUN npm run build
 
 FROM base AS runner

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Inject per-tile extent/children metadata required by deepscatter 2.x."""
 
 from __future__ import annotations

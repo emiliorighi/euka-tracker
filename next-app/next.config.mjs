@@ -1,31 +1,36 @@
 /** @type {import('next').NextConfig} */
-const tileProxy = process.env.TILE_PROXY_URL ?? "http://127.0.0.1:8080"
+const isPagesExport = process.env.GITHUB_PAGES === "1"
+/** When set, dev rewrites /tiles and /data to an external static server. Otherwise public/ symlinks are used. */
+const tileProxy = process.env.TILE_PROXY_URL
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  output: "standalone",
+  output: isPagesExport ? "export" : "standalone",
+  trailingSlash: isPagesExport,
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
     unoptimized: true,
   },
-  async rewrites() {
-    return [
-      {
-        source: "/tiles/:path*",
-        destination: `${tileProxy}/tiles/:path*`,
-      },
-      {
-        source: "/parquet/:path*",
-        destination: `${tileProxy}/parquet/:path*`,
-      },
-      {
-        source: "/staged/:path*",
-        destination: `${tileProxy}/staged/:path*`,
-      },
-    ]
-  },
+}
+
+if (!isPagesExport && tileProxy) {
+  nextConfig.rewrites = async () => [
+    {
+      source: "/tiles/:path*",
+      destination: `${tileProxy}/tiles/:path*`,
+    },
+    {
+      source: "/data/:path*",
+      destination: `${tileProxy}/data/:path*`,
+    },
+    {
+      source: "/parquet/:path*",
+      destination: `${tileProxy}/parquet/:path*`,
+    },
+  ]
 }
 
 export default nextConfig

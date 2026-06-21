@@ -1,85 +1,58 @@
 # euka-tracker
 
-Tracking taxonomy, assemblies, annotations and reads under Eukaryota, with a serverless Lifemap-style tree visualization.
+IUCN-centric species matrix linking Red List assessments to GBIF, iNaturalist, and NCBI genomic evidence. Static Next.js site deployed via GitHub Pages.
 
-## Overview
-
-- **Data**: NCBI taxonomy tree + eukaryotic species matrix (assemblies, annotations, reads)
-- **Pipeline**: Build tree → radial layout → GeoJSON → vector tiles (MVT) → search index
-- **Frontend**: MapLibre GL vector map with search, click popups, fly-to
-
-## Data Files
-
-- `data/ncbi_taxonomy_tree.tsv`: hierarchy (parent_id, id, name, rank)
-- `data/eukaryotic_species_matrix.tsv`: lookup (taxid, has_assembly, has_annotation, has_reads, ...)
-
-## Quick Start
-
-### 1. Run Pipeline
-
-```bash
-pip install -r requirements.txt
-python3 -m pipeline.run_pipeline
-```
-
-Output:
-- `output/geojson/` — points, lines, polygons
-- `output/search_index.json` — search index
-- `output/tiles.mbtiles` — vector tiles (if tippecanoe installed)
-
-### 2. Generate Vector Tiles
-
-Install [tippecanoe](https://github.com/felt/tippecanoe) and [mb-util](https://github.com/mapbox/mbutil):
-
-```bash
-# macOS
-brew install tippecanoe
-pip install mbutil
-
-./scripts/make_tiles.sh
-```
-
-### 3. Serve Frontend
-
-```bash
-npm install
-npm run serve
-```
-
-Open http://localhost:3000
-
-## Project Structure
+## Layout
 
 ```
 euka-tracker/
-├── pipeline/
-│   ├── build_tree.py       # TSV → tree
-│   ├── layout.py           # (uses scripts/radial_layout.py)
-│   ├── enrich_lookup.py    # Merge lookup data
-│   ├── export_geojson.py   # GeoJSON export
-│   └── run_pipeline.py     # Orchestrator
-├── scripts/
-│   ├── radial_layout.py    # Radial layout algorithm
-│   └── make_tiles.sh       # tippecanoe → XYZ tiles
-├── frontend/
-│   ├── index.html
-│   ├── main.js             # MapLibre + search
-│   └── style.css
-├── styles/
-│   └── lifemap-style.json
-├── tiles/                  # Vector tiles (after make_tiles.sh)
-├── output/                 # Pipeline output
-├── data/
-│   ├── ncbi_taxonomy_tree.tsv
-│   └── eukaryotic_species_matrix.tsv
-└── docs.md                 # Full specification
+  pipeline/     # python -m pipeline — fetch, build matrix, site-data artifact
+  next-app/     # static site (GitHub Pages)
+  datasets/     # pipeline inputs (gitignored)
+  cache/        # GBIF / iNat / OTL downloads (gitignored)
+  site-data/    # CI artifact for Pages deploy (gitignored)
+  docs/         # deployment runbooks
 ```
 
-## Environment
+## Quick start
 
-- `VITE_TILE_URL`: Tile base URL (default: `/tiles/tiles.json`)
-- `VITE_API_URL`: API base URL (optional; uses `/output/search_index.json` if unset)
+```bash
+pip install -r requirements.txt
 
-## License
+# Smoke test (reuse existing datasets/ + cache/)
+python -m pipeline --skip-download --limit 1000
 
-MIT
+# Full weekly run (requires IUCN_REDLIST_DOWNLOAD_URL)
+python -m pipeline
+```
+
+Output: `pipeline/output/iucn_species_matrix.tsv` (~172k rows) and `site-data/` for deploy.
+
+## Next.js app
+
+```bash
+cd next-app
+npm install
+npm run dev          # http://localhost:3000
+GITHUB_PAGES=1 npm run build:pages   # static export
+```
+
+## Deployment
+
+1. Add GitHub secret **`IUCN_REDLIST_DOWNLOAD_URL`** (IUCN saved export URL).
+2. Enable **Pages → GitHub Actions**.
+3. Run **Weekly IUCN pipeline** workflow; **Deploy GitHub Pages** follows on success.
+
+See **[docs/GITHUB_PAGES.md](docs/GITHUB_PAGES.md)** and **[pipeline/README.md](pipeline/README.md)**.
+
+## Pipeline modules
+
+| Command | Purpose |
+|---------|---------|
+| `python -m pipeline` | Full weekly orchestrator |
+| `python -m pipeline.fetch.iucn --force` | IUCN simple_summary.csv |
+| `python -m pipeline.fetch.gbif --force` | GBIF backbone zip |
+| `python -m pipeline.fetch.inat --force` | iNat taxonomy DwCA |
+| `python -m pipeline.fetch.ncbi_taxonomy --force` | NCBI taxonomy.db |
+| `python -m pipeline.build.matrix` | IUCN species matrix |
+| `python -m pipeline.build.cross_universe --force` | cross_universe.db |

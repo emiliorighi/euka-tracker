@@ -7,7 +7,6 @@ __pycache__/
 env/
 venv/
 ENV/
-build/
 develop-eggs/
 dist/
 downloads/
@@ -43,8 +42,8 @@ tmp/
 node_modules
 tiles/
 output/
-data/cache/
 .venv/
+out/
 
 *.gz
 *.jsonl
@@ -52,5 +51,12 @@ redlist_species_data_2f02b1b4-6088-405f-8387-1e285bb770f2/
 .cursor/
 .cache-test/
 staged/
-inaturalist_cache/
 *.parquet
+
+datasets/*
+!datasets/.gitkeep
+cache/*
+!cache/.gitkeep
+pipeline/output/*
+!pipeline/output/.gitkeep
+site-data/

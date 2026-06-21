@@ -4,6 +4,9 @@ ete3>=3.1.0
 # HTTP requests
 requests>=2.31.0
 
+# OTL synthetic-tree parsing (ete3 cannot parse OTL quoted labels)
+biopython>=1.83
+
 # Data processing
 pandas>=2.1.0
 shapely>=2.0.0
